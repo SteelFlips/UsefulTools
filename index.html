@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Merge Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+        .highlight {
+            background-color: #4B5563;
+            color: #10B981;
+        }
+        body {
+            background-color: #1F2937;
+            color: #F9FAFB;
+        }
+        textarea {
+            background-color: #374151;
+            color: #F9FAFB;
+        }
+        button {
+            transition: background-color 0.3s ease;
+        }
+        .diff-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .diff-result {
+            padding: 0.5rem;
+            border: 1px solid #4B5563;
+            border-radius: 0.25rem;
+            white-space: pre-wrap;
+            font-family: monospace;
+            overflow: auto;
+        }
+        .diff-result-container {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        .merge-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .merge-button, .cancel-button {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            text-align: center;
+            background-color: #2563EB;
+            color: white;
+        }
+        .merge-button:hover, .cancel-button:hover {
+            background-color: #1D4ED8;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="dark">
+
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-6">Code Merge Tool</h1>
+        <div class="flex gap-4 mb-4">
+            <textarea id="originalText" class="w-1/2 p-2 rounded" rows="10" placeholder="Original text"></textarea>
+            <textarea id="changedText" class="w-1/2 p-2 rounded" rows="10" placeholder="Changed text"></textarea>
+        </div>
+        <button id="findDifference" class="px-4 py-2 bg-green-600 rounded text-white font-bold">Find difference</button>
+
+        <div class="diff-result-container mt-6">
+            <div id="originalResult" class="diff-result"></div>
+            <div id="changedResult" class="diff-result"></div>
+        </div>
+    </div>
+
+    <script>
+        function findDifferences() {
+            const originalText = document.getElementById('originalText').value.split('\n');
+            const changedText = document.getElementById('changedText').value.split('\n');
+            const maxLength = Math.max(originalText.length, changedText.length);
+
+            let resultOriginal = '';
+            let resultChanged = '';
+
+            for (let i = 0; i < maxLength; i++) {
+                const originalLine = originalText[i] || '';
+                const changedLine = changedText[i] || '';
+                const isDifferent = originalLine !== changedLine;
+
+                resultOriginal += `<div class="${isDifferent ? 'highlight' : ''}" onclick="showMergeOptions(this, 'original', ${i})">${originalLine}</div>`;
+                resultChanged += `<div class="${isDifferent ? 'highlight' : ''}" onclick="showMergeOptions(this, 'changed', ${i})">${changedLine}</div>`;
+            }
+
+            document.getElementById('originalResult').innerHTML = resultOriginal;
+            document.getElementById('changedResult').innerHTML = resultChanged;
+        }
+
+        function showMergeOptions(element, side, lineIndex) {
+            // Remove existing merge buttons if any
+            removeMergeOptions();
+
+            const mergeContainer = document.createElement('div');
+            mergeContainer.classList.add('merge-buttons');
+            mergeContainer.innerHTML = `
+                <div class="merge-button" onclick="mergeChange('${side}', ${lineIndex})">Merge change</div>
+                <div class="cancel-button" onclick="removeMergeOptions()">Cancel</div>
+            `;
+            element.appendChild(mergeContainer);
+        }
+
+        function removeMergeOptions() {
+            const existingButtons = document.querySelectorAll('.merge-buttons');
+            existingButtons.forEach(buttons => buttons.remove());
+        }
+
+        function mergeChange(side, lineIndex) {
+            const originalLines = document.getElementById('originalText').value.split('\n');
+            const changedLines = document.getElementById('changedText').value.split('\n');
+            if (side === 'original') {
+                changedLines[lineIndex] = originalLines[lineIndex];
+            } else {
+                originalLines[lineIndex] = changedLines[lineIndex];
+            }
+            // Update the result areas without altering the original input
+            document.getElementById('originalResult').children[lineIndex].textContent = originalLines[lineIndex];
+            document.getElementById('changedResult').children[lineIndex].textContent = changedLines[lineIndex];
+            removeMergeOptions();
+        }
+
+        document.getElementById('findDifference').addEventListener('click', findDifferences);
+    </script>
+
+</body>
+</html>
